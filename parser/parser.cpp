@@ -29,6 +29,18 @@ namespace Parser {
 		return (s_CurTok = Lexer::GetTok());
 	}
 
+	static int GetOpPrecedence() {
+		switch (static_cast<char>(s_CurTok)) {
+			case '<' :
+			case '>' : return 10;
+			case '+' :
+			case '-' : return 20;
+			case '*' : return 40;
+			case '/' : return 50;
+			default  : return -1;
+		}
+	}
+
 
 	// -- Entry Point / Dispatcher ---------------------------------------------
 
@@ -47,7 +59,46 @@ namespace Parser {
 	// -- (Not) Visitors -------------------------------------------------------
 
 	AstNode ParseExpression() {
-		return nullptr; // TODO
+		auto lhs = Parse();
+		if (!lhs) return nullptr;
+
+		return ParseBinOpRhs(0, std::move(lhs));
+	}
+
+
+	AstNode ParseBinOpRhs(int exprPrecedence, AstNode lhs) {
+		// If this is a binop, find its precedence
+		while (true) {
+			int opPrecedence = GetOpPrecedence();
+
+			// If this is a binop that binds at least as tightly as the current binop,
+			// consume it. Otherwise, we are done.
+			if (opPrecedence < exprPrecedence)
+				return lhs;
+
+			// Okay, we know this is a binary operator.
+			auto binOp = static_cast<char>(s_CurTok);
+			GetNextToken(); // Consume the operator
+
+			// Parse the primary expression after the binary operator
+			auto rhs = Parse();
+			if (!rhs) return nullptr;
+
+			// If the current operator binds less tightly with rhs than the operator *after*
+			// rhs, let the pending operator take rhs as its lhs.
+			// TODO: This comment is word soup, just draw a diagram
+			int nextPrecedence = GetOpPrecedence();
+			if (opPrecedence < nextPrecedence) {
+				rhs = ParseBinOpRhs(opPrecedence + 1, std::move(rhs));
+				if (!rhs) return nullptr;
+			}
+
+			// Merge lhs/rhs
+			lhs = std::make_unique<AST::BinaryExpr>(
+				binOp,
+				std::move(lhs),
+				std::move(rhs));
+		}
 	}
 
 

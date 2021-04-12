@@ -14,6 +14,9 @@ namespace AST {
 	};
 
 
+	using AstNode = std::unique_ptr<Expr>;
+
+
 	class NumberExpr : public Expr {
 	  private:
 		double m_Val;
@@ -37,13 +40,13 @@ namespace AST {
 	class BinaryExpr : public Expr {
 	  private:
 		char m_Op;
-		std::unique_ptr<Expr> m_LHS, m_RHS;
+		AstNode m_LHS, m_RHS;
 
 	  public:
-		BinaryExpr(char op, Expr* lhs, Expr* rhs)
+		BinaryExpr(char op, AstNode lhs, AstNode rhs)
 			: m_Op(op)
-			, m_LHS(lhs)
-			, m_RHS(rhs)
+			, m_LHS(std::move(lhs))
+			, m_RHS(std::move(rhs))
 		{}
 	};
 
@@ -51,13 +54,10 @@ namespace AST {
 	class CallExpr : public Expr {
 	  private:
 		std::string m_Callee;
-		std::vector<std::unique_ptr<Expr>> m_Args;
+		std::vector<AstNode> m_Args;
 
 	  public:
-		CallExpr(
-			std::string callee,
-			std::vector<std::unique_ptr<Expr>> args
-		)
+		CallExpr(std::string callee, std::vector<AstNode> args)
 			: m_Callee(std::move(callee))
 			, m_Args(std::move(args))
 		{}

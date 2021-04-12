@@ -19,6 +19,8 @@ namespace Parser {
 
 	static AstNode ParseExpression();
 
+	static AstNode ParseBinOpRhs(int exprPrecedence, AstNode lhs);
+
 	/** NumberExpr := Number */
 	static AstNode ParseNumberExpr();
 
