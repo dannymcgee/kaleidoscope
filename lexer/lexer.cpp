@@ -1,31 +1,14 @@
-#ifndef KALEIDOSCOPE_LEXER_HPP
-#define KALEIDOSCOPE_LEXER_HPP
-
-#include <string>
-#include <iostream>
+#include "lexer.h"
 
 
 namespace Lexer {
 
-	static std::string s_IdentStr;
-	static double s_NumVal;
-
-
-	enum class Token : int {
-		Eof    = -1,
-		// Commands
-		Def    = -2,
-		Extern = -3,
-		// Primary
-		Ident  = -4,
-		Number = -5,
-	};
-
-	bool operator == (const Token& tok, const char& c) {
+	bool operator==(const Token &tok, const char &c) {
 		return static_cast<char>(tok) == c;
 	}
 
-	std::ostream& operator << (std::ostream& stream, const Token& tok) {
+
+	std::ostream &operator<<(std::ostream &stream, const Token &tok) {
 		switch (tok) {
 			case Token::Eof:
 				stream << "EOF";
@@ -50,7 +33,7 @@ namespace Lexer {
 	}
 
 
-	static Token GetTok() {
+	Token GetTok() {
 		static int s_lastChar = ' ';
 
 		// Ignore whitespace
@@ -106,6 +89,3 @@ namespace Lexer {
 	}
 
 }
-
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef KALEIDOSCOPE_STMT_HPP
-#define KALEIDOSCOPE_STMT_HPP
+#pragma once
 
 #include <memory>
 #include <string>
@@ -46,5 +45,3 @@ namespace AST {
 	};
 
 }
-
-#endif

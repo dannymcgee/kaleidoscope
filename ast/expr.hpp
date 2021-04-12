@@ -1,5 +1,4 @@
-#ifndef KALEIDOSCOPE_EXPR_HPP
-#define KALEIDOSCOPE_EXPR_HPP
+#pragma once
 
 #include <string>
 #include <utility>
@@ -65,6 +64,3 @@ namespace AST {
 	};
 
 }
-
-
-#endif
