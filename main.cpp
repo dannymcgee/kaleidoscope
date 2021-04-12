@@ -1,8 +1,9 @@
 #include <iostream>
 
-#include "lexer.hpp"
 #include "ast/expr.hpp"
 #include "ast/stmt.hpp"
+#include "lexer.hpp"
+#include "parser.hpp"
 
 
 int main() {

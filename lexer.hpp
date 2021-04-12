@@ -7,8 +7,9 @@
 
 namespace Lexer {
 
-	static std::string IdentStr;
-	static double NumVal;
+	static std::string s_IdentStr;
+	static double s_NumVal;
+
 
 	enum class Token : int {
 		Eof    = -1,
@@ -20,59 +21,8 @@ namespace Lexer {
 		Number = -5,
 	};
 
-	static Token GetTok() {
-		static int LastChar = ' ';
-
-		// Ignore whitespace
-		while (isspace(LastChar))
-			LastChar = getchar();
-
-		// Ident: [a-zA-Z][a-zA-Z0-9]*
-		if (isalpha(LastChar)) {
-			IdentStr = static_cast<char>(LastChar);
-
-			while (isalnum((LastChar = getchar())))
-				IdentStr += static_cast<char>(LastChar);
-
-			if (IdentStr == "def")
-				return Token::Def;
-			if (IdentStr == "extern")
-				return Token::Extern;
-
-			return Token::Ident;
-		}
-
-		// Number
-		if (isdigit(LastChar) || LastChar == '.') {
-			std::string NumStr;
-
-			do {
-				NumStr += static_cast<char>(LastChar);
-				LastChar = getchar();
-			} while (isdigit(LastChar) || LastChar == '.');
-
-			NumVal = strtod(NumStr.c_str(), nullptr);
-
-			return Token::Number;
-		}
-
-		// Comment
-		if (LastChar == '#') {
-			do LastChar = getchar();
-			while (LastChar != EOF && LastChar != '\n' && LastChar != '\r');
-
-			if (LastChar != EOF)
-				return GetTok();
-		}
-
-		// EOF
-		if (LastChar == EOF)
-			return Token::Eof;
-
-		// Fallback -- just return the character as its ascii value
-		int ThisChar = LastChar;
-		LastChar = getchar();
-		return static_cast<Token>(ThisChar);
+	bool operator == (const Token& tok, const char& c) {
+		return static_cast<char>(tok) == c;
 	}
 
 	std::ostream& operator << (std::ostream& stream, const Token& tok) {
@@ -87,17 +37,72 @@ namespace Lexer {
 				stream << "extern";
 				break;
 			case Token::Ident:
-				stream << "Ident: " << IdentStr;
+				stream << "Ident: " << s_IdentStr;
 				break;
 			case Token::Number:
-				stream << "Number: " << NumVal;
+				stream << "Number: " << s_NumVal;
 				break;
 			default:
 				stream << "Unknown: " << static_cast<char>(tok);
 				break;
 		}
-
 		return stream;
+	}
+
+
+	static Token GetTok() {
+		static int s_lastChar = ' ';
+
+		// Ignore whitespace
+		while (isspace(s_lastChar))
+			s_lastChar = getchar();
+
+		// Ident: [a-zA-Z][a-zA-Z0-9]*
+		if (isalpha(s_lastChar)) {
+			s_IdentStr = static_cast<char>(s_lastChar);
+
+			while (isalnum((s_lastChar = getchar())))
+				s_IdentStr += static_cast<char>(s_lastChar);
+
+			if (s_IdentStr == "def")
+				return Token::Def;
+			if (s_IdentStr == "extern")
+				return Token::Extern;
+
+			return Token::Ident;
+		}
+
+		// Number
+		if (isdigit(s_lastChar) || s_lastChar == '.') {
+			std::string numStr;
+
+			do {
+				numStr += static_cast<char>(s_lastChar);
+				s_lastChar = getchar();
+			} while (isdigit(s_lastChar) || s_lastChar == '.');
+
+			s_NumVal = strtod(numStr.c_str(), nullptr);
+
+			return Token::Number;
+		}
+
+		// Comment
+		if (s_lastChar == '#') {
+			do s_lastChar = getchar();
+			while (s_lastChar != EOF && s_lastChar != '\n' && s_lastChar != '\r');
+
+			if (s_lastChar != EOF)
+				return GetTok();
+		}
+
+		// EOF
+		if (s_lastChar == EOF)
+			return Token::Eof;
+
+		// Fallback -- just return the character as its ascii value
+		int thisChar = s_lastChar;
+		s_lastChar = getchar();
+		return static_cast<Token>(thisChar);
 	}
 
 }
