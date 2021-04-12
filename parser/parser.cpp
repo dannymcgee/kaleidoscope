@@ -10,10 +10,9 @@
 
 namespace Parser {
 
-	static Lexer::Token s_CurTok;
-
-
 	// -- Implementation details -----------------------------------------------
+
+	static Lexer::Token s_CurTok;
 
 	static AstNode LogError(const std::string& msg) {
 		std::cerr << "LogError: " << msg << std::endl;
