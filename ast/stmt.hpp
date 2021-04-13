@@ -13,6 +13,7 @@ namespace AST {
 	class Stmt {
 	  public:
 		virtual ~Stmt() = default;
+		virtual void PrettyPrint(std::stringstream& output, int indent) = NULL;
 	};
 
 
@@ -29,6 +30,22 @@ namespace AST {
 			: m_Name(std::move(name))
 			, m_Params(std::move(params))
 		{}
+
+		void PrettyPrint(std::stringstream& output, int indent) {
+			auto indentStr = Indent(indent);
+			output
+				<< indentStr << "FuncSignature {" << std::endl
+				<< indentStr << "   Name: " << m_Name << std::endl
+				<< indentStr << "   Params: [" << std::endl;
+
+			for (const auto& param : m_Params) {
+				output << indentStr << "      " << param << std::endl;
+			}
+
+			output
+				<< indentStr << "   ]" << std::endl
+				<< indentStr << "}" << std::endl;
+		}
 	};
 
 
@@ -45,6 +62,14 @@ namespace AST {
 			: m_Signature(std::move(signature))
 			, m_Body(std::move(body))
 		{}
+
+		void PrettyPrint(std::stringstream& output, int indent) override {
+			auto indentStr = Indent(indent);
+			output << indentStr << "FuncStmt {" << std::endl;
+			m_Signature->PrettyPrint(output, indent + 1);
+			m_Body->PrettyPrint(output, indent + 1);
+			output << indentStr << "}" << std::endl;
+		}
 	};
 
 }

@@ -13,7 +13,9 @@ namespace Parser {
 	// -- Implementation details -----------------------------------------------
 
 	static void LogError(const std::string& msg) {
-		std::cerr << "LogError: " << msg << std::endl;
+		std::cerr
+			<< "LogError: " << msg << std::endl
+			<< "Error at token: " << s_CurTok << std::endl;
 	}
 
 	static int GetOpPrecedence() {

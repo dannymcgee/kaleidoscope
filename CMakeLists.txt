@@ -12,4 +12,4 @@ add_executable(
     ast/stmt.hpp
     parser/parser.h
     parser/parser.cpp
-)
+    repl/repl.hpp)
