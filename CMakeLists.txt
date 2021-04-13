@@ -1,15 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
-project(kaleidoscope)
+project(lox)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(
-    kaleidoscope
-    main.cpp
-    lexer/lexer.h
-    lexer/lexer.cpp
-    ast/expr.hpp
-    ast/stmt.hpp
-    parser/parser.h
-    parser/parser.cpp
-    repl/repl.hpp)
+add_executable(lox main.cpp)
