@@ -4,33 +4,39 @@
 #include <string>
 
 
-// Fwd declaration
+// Fwd declarations
 namespace AST {
 	class Expr;
+	class FuncSignature;
+	class Stmt;
+}
+namespace Lexer {
+	enum class Token;
 }
 
 
 namespace Parser {
 
-	using AstNode = std::unique_ptr<AST::Expr>;
+	// Type aliases for readability
+	using ExprNode = std::unique_ptr<AST::Expr>;
+	using FuncSig = std::unique_ptr<AST::FuncSignature>;
+	using StmtNode = std::unique_ptr<AST::Stmt>;
 
-	/** Primary := IdentExpr | NumberExpr | ParenExpr  */
-	AstNode Parse();
 
-	static AstNode ParseExpression();
+	static Lexer::Token s_CurTok;
 
-	static AstNode ParseBinOpRhs(int exprPrecedence, AstNode lhs);
+	Lexer::Token GetNextToken();
 
-	/** NumberExpr := Number */
-	static AstNode ParseNumberExpr();
-
-	/** ParenExpr := '(' Expr ')' */
-	static AstNode ParseParenExpr();
-
-	/** IdentExpr := CallExpr | Ident */
-	static AstNode ParseIdentExpr();
-
-	/** CallExpr := Ident '(' ( Expr ( ',' Expr )* )? ')' */
-	static AstNode ParseCallExpr(const std::string& funcName);
+	ExprNode ParsePrimary();
+	ExprNode ParseExpression();
+	ExprNode ParseBinOpRhs(int exprPrecedence, ExprNode lhs);
+	ExprNode ParseNumberExpr();
+	ExprNode ParseParenExpr();
+	ExprNode ParseIdentExpr();
+	ExprNode ParseCallExpr(const std::string& funcName);
+	FuncSig ParseFuncSignature();
+	FuncSig ParseExtern();
+	StmtNode ParseFuncStmt();
+	StmtNode ParseTopLevelExpr();
 
 }

@@ -38,9 +38,12 @@ namespace AST {
 		std::unique_ptr<Expr> m_Body;
 
 	  public:
-		FuncStmt(FuncSignature* signature, Expr* body)
-			: m_Signature(signature)
-			, m_Body(body)
+		FuncStmt(
+			std::unique_ptr<FuncSignature> signature,
+			std::unique_ptr<Expr> body
+		)
+			: m_Signature(std::move(signature))
+			, m_Body(std::move(body))
 		{}
 	};
 

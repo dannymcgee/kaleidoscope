@@ -12,20 +12,8 @@ namespace Parser {
 
 	// -- Implementation details -----------------------------------------------
 
-	static Lexer::Token s_CurTok;
-
-	static AstNode LogError(const std::string& msg) {
+	static void LogError(const std::string& msg) {
 		std::cerr << "LogError: " << msg << std::endl;
-		return nullptr;
-	}
-
-	static std::unique_ptr<AST::FuncSignature> LogErrorP(const std::string& msg) {
-		LogError(msg);
-		return nullptr;
-	}
-
-	static Lexer::Token GetNextToken() {
-		return (s_CurTok = Lexer::GetTok());
 	}
 
 	static int GetOpPrecedence() {
@@ -41,31 +29,35 @@ namespace Parser {
 	}
 
 
-	// -- Entry Point / Dispatcher ---------------------------------------------
+	// -- Public API -----------------------------------------------------------
 
-	AstNode Parse() {
+	Lexer::Token GetNextToken() {
+		return (s_CurTok = Lexer::GetTok());
+	}
+
+
+	ExprNode ParsePrimary() {
 		switch (s_CurTok) {
 			case Lexer::Token::Ident  : return ParseIdentExpr();
 			case Lexer::Token::Number : return ParseNumberExpr();
 			default:
 				if (s_CurTok == '(')     return ParseParenExpr();
 
-				return LogError("Unknown token when expecting an expression.");
+				LogError("Unknown token when expecting an expression.");
+				return nullptr;
 		}
 	}
 
 
-	// -- (Not) Visitors -------------------------------------------------------
-
-	AstNode ParseExpression() {
-		auto lhs = Parse();
+	ExprNode ParseExpression() {
+		auto lhs = ParsePrimary();
 		if (!lhs) return nullptr;
 
 		return ParseBinOpRhs(0, std::move(lhs));
 	}
 
 
-	AstNode ParseBinOpRhs(int exprPrecedence, AstNode lhs) {
+	ExprNode ParseBinOpRhs(int exprPrecedence, ExprNode lhs) {
 		// If this is a binop, find its precedence
 		while (true) {
 			int opPrecedence = GetOpPrecedence();
@@ -80,7 +72,7 @@ namespace Parser {
 			GetNextToken(); // Consume the operator
 
 			// Parse the primary expression after the binary operator
-			auto rhs = Parse();
+			auto rhs = ParsePrimary();
 			if (!rhs) return nullptr;
 
 			// If the current operator binds less tightly with rhs than the operator *after*
@@ -101,7 +93,7 @@ namespace Parser {
 	}
 
 
-	AstNode ParseNumberExpr() {
+	ExprNode ParseNumberExpr() {
 		auto result = std::make_unique<AST::NumberExpr>(Lexer::s_NumVal);
 		GetNextToken(); // Consume the number
 
@@ -109,15 +101,17 @@ namespace Parser {
 	}
 
 
-	AstNode ParseParenExpr() {
+	ExprNode ParseParenExpr() {
 		GetNextToken(); // Consume '('
 		auto v = ParseExpression();
 
 		if (!v)
 			return nullptr;
 
-		if (s_CurTok != ')')
-			return LogError("Expected ')'.");
+		if (s_CurTok != ')') {
+			LogError("Expected ')'.");
+			return nullptr;
+		}
 
 		GetNextToken(); // Consume ')'
 
@@ -125,7 +119,7 @@ namespace Parser {
 	}
 
 
-	AstNode ParseIdentExpr() {
+	ExprNode ParseIdentExpr() {
 		std::string identName = Lexer::s_IdentStr;
 		GetNextToken(); // Consume identifier
 
@@ -137,10 +131,10 @@ namespace Parser {
 	}
 
 
-	AstNode ParseCallExpr(const std::string& funcName) {
+	ExprNode ParseCallExpr(const std::string& funcName) {
 		GetNextToken(); // Consume '('
 
-		std::vector<AstNode> args;
+		std::vector<ExprNode> args;
 		if (s_CurTok != ')') {
 			while (true) {
 				if (auto arg = ParseExpression())
@@ -151,8 +145,10 @@ namespace Parser {
 				if (s_CurTok == ')')
 					break;
 
-				if (s_CurTok != ',')
-					return LogError("Expected ')' or ',' in argument list.");
+				if (s_CurTok != ',') {
+					LogError("Expected ')' or ',' in argument list.");
+					return nullptr;
+				}
 
 				GetNextToken();
 			}
@@ -160,6 +156,72 @@ namespace Parser {
 		GetNextToken(); // Consume ')'
 
 		return std::make_unique<AST::CallExpr>(funcName, std::move(args));
+	}
+
+
+	FuncSig ParseFuncSignature() {
+		if (s_CurTok != Lexer::Token::Ident) {
+			LogError("Expected function name in signature.");
+			return nullptr;
+		}
+
+		std::string funcName = Lexer::s_IdentStr;
+		GetNextToken(); // Consume '('
+
+		if (s_CurTok != '(') {
+			LogError("Expected '(' in function signature.");
+			return nullptr;
+		}
+
+		std::vector<std::string> argNames;
+		while (GetNextToken() == Lexer::Token::Ident)
+			argNames.push_back(Lexer::s_IdentStr);
+
+		if (s_CurTok != ')') {
+			LogError("Expected ')' in function signature.");
+			return nullptr;
+		}
+
+		GetNextToken(); // Consume ')'
+
+		return std::make_unique<AST::FuncSignature>(
+			std::move(funcName),
+			std::move(argNames));
+	}
+
+
+	FuncSig ParseExtern() {
+		GetNextToken(); // Consume 'extern'
+		return ParseFuncSignature();
+	}
+
+
+	StmtNode ParseFuncStmt() {
+		GetNextToken(); // Consume 'def'
+
+		auto signature = ParseFuncSignature();
+		if (!signature) return nullptr;
+
+		auto body = ParseExpression();
+		if (!body) return nullptr;
+
+		return std::make_unique<AST::FuncStmt>(
+			std::move(signature),
+			std::move(body));
+	}
+
+
+	StmtNode ParseTopLevelExpr() {
+		auto expr = ParseExpression();
+		if (!expr) return nullptr;
+
+		auto signature = std::make_unique<AST::FuncSignature>(
+			"",
+			std::vector<std::string>());
+
+		return std::make_unique<AST::FuncStmt>(
+			std::move(signature),
+			std::move(expr));
 	}
 
 }
